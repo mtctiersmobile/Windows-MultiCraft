@@ -60,15 +60,21 @@ endif()
 if(ENABLE_CCACHE AND NOT MSVC)
 	find_program(CCACHE_PROGRAM ccache)
 	if(CCACHE_PROGRAM)
-		if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
-			set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING
-				"C compiler launcher")
+		if(WIN32 AND CCACHE_PROGRAM MATCHES "/usr/bin/ccache(\\.exe)?$")
+			message(STATUS
+				"Ignoring MSYS ccache at ${CCACHE_PROGRAM}; install the MinGW "
+				"ccache package instead")
+		else()
+			if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
+				set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING
+					"C compiler launcher")
+			endif()
+			if(NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
+				set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING
+					"C++ compiler launcher")
+			endif()
+			message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
 		endif()
-		if(NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
-			set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING
-				"C++ compiler launcher")
-		endif()
-		message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
 	else()
 		message(STATUS "ccache not found; continuing without compiler cache")
 	endif()

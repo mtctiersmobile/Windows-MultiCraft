@@ -295,7 +295,7 @@ Library specific options:
 - [Ninja](https://ninja-build.org/) for the recommended command-line build flow
 - [vcpkg](https://github.com/Microsoft/vcpkg)
 - [Git](https://git-scm.com/downloads)
-- `ccache` is optional but recommended when building repeatedly with MinGW/MSYS2
+- the MinGW-flavored `ccache` package is optional but recommended when building repeatedly with MSYS2
 
 ### Compiling and installing the dependencies
 
