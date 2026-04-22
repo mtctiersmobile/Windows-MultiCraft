@@ -11,8 +11,21 @@ sh libraries.sh
 cd ..
 
 export DEPS_ROOT=$(pwd)/deps
+CMAKE_GENERATOR=${CMAKE_GENERATOR:-Ninja}
+EXTRA_CMAKE_ARGS=()
 
-cmake ../ \
+echo
+echo "Using CMake generator: ${CMAKE_GENERATOR}"
+
+if command -v ccache >/dev/null 2>&1; then
+	echo "Using ccache compiler launcher."
+	EXTRA_CMAKE_ARGS+=(-DENABLE_CCACHE=ON)
+else
+	echo "ccache not found, continuing without compiler cache."
+	EXTRA_CMAKE_ARGS+=(-DENABLE_CCACHE=OFF)
+fi
+
+cmake -G "${CMAKE_GENERATOR}" ../ \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DENABLE_SQLITE=1 \
 	-DENABLE_POSTGRESQL=0 \
@@ -76,7 +89,8 @@ cmake ../ \
 	-DOPENSSL_LIBRARY="$DEPS_ROOT/openssl/lib/libcrypto.a" \
 	-DOPENSSL_INCLUDE_DIR="$DEPS_ROOT/openssl/include" \
 	-DZSTD_LIBRARY="$DEPS_ROOT/zstd/lib/libzstd.a" \
-	-DZSTD_INCLUDE_DIR="$DEPS_ROOT/zstd/include"
+	-DZSTD_INCLUDE_DIR="$DEPS_ROOT/zstd/include" \
+	"${EXTRA_CMAKE_ARGS[@]}" "$@"
 
 echo
-echo "Build with 'cmake --build . -j'"
+echo "Build with 'cmake --build . --parallel'"

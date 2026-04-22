@@ -744,6 +744,13 @@ bool open_url(const std::string &url, bool untrusted)
 	return open_uri(url, untrusted);
 }
 
+#if !defined(__ANDROID__) && !defined(__APPLE__)
+std::string getSecretKey(const std::string &key)
+{
+	return key;
+}
+#endif
+
 #if defined(__APPLE__)
 bool upgrade(const std::string &item, const std::string &extra)
 {

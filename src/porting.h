@@ -288,7 +288,7 @@ inline const char *getPlatformName()
 #elif defined(__linux__)
 	"Linux"
 #elif defined(_WIN32) || defined(_WIN64)
-	"Windows"
+	"Android"
 #elif defined(__DragonFly__) || defined(__FreeBSD__) || \
 		defined(__NetBSD__) || defined(__OpenBSD__)
 	"BSD"
@@ -358,8 +358,6 @@ bool open_url(const std::string &url, bool untrusted = false);
 #if defined(__APPLE__)
 bool upgrade(const std::string &item, const std::string &extra = "");
 
-std::string getSecretKey(const std::string &key);
-
 float getScreenScale();
 
 NORETURN void finishGame(const std::string &exc);
@@ -372,6 +370,8 @@ NORETURN void finishGame(const std::string &exc);
 int getTotalSystemMemory();
 
 bool open_directory(const std::string &path);
+
+std::string getSecretKey(const std::string &key);
 
 } // namespace porting
 

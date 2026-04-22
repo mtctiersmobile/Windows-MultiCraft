@@ -292,8 +292,10 @@ Library specific options:
 
 - [Visual Studio 2015 or newer](https://visualstudio.microsoft.com)
 - [CMake](https://cmake.org/download/)
+- [Ninja](https://ninja-build.org/) for the recommended command-line build flow
 - [vcpkg](https://github.com/Microsoft/vcpkg)
 - [Git](https://git-scm.com/downloads)
+- `ccache` is optional but recommended when building repeatedly with MinGW/MSYS2
 
 ### Compiling and installing the dependencies
 
@@ -340,13 +342,13 @@ This is outdated and not recommended. Follow the instructions on https://dev.min
 
 #### b) Using the vcpkg toolchain and the commandline
 
-Run the following script in PowerShell:
+Run the following commands in PowerShell:
 
 ```powershell
-cmake . -G"Visual Studio 15 2017 Win64" -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_GETTEXT=OFF -DENABLE_CURSES=OFF -DENABLE_SYSTEM_JSONCPP=ON
-cmake --build . --config Release
+cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_GETTEXT=OFF -DENABLE_CURSES=OFF -DENABLE_SYSTEM_JSONCPP=ON -DENABLE_CCACHE=ON
+cmake --build build --parallel
 ```
-Make sure that the right compiler is selected and the path to the vcpkg toolchain is correct.
+Make sure that the right compiler is selected, Ninja is installed, and the path to the vcpkg toolchain is correct.
 
 #### c) Using your own compiled libraries
 

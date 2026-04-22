@@ -933,7 +933,7 @@ inline void Client::handleCommand(NetworkPacket* pkt)
 */
 void Client::ProcessData(NetworkPacket *pkt)
 {
-#if defined(__ANDROID__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
 	if (pkt->getCommand() != TOCLIENT_HELLO && pkt->getCommand() != TOCLIENT_MEDIA &&
 			pkt->getCommand() != TOCLIENT_ACCESS_DENIED && pkt->getCommand() != 0 &&
 			m_compression_mode == NETPROTO_COMPRESSION_ENC) {
@@ -997,7 +997,7 @@ void Client::ProcessData(NetworkPacket *pkt)
 
 void Client::Send(NetworkPacket* pkt)
 {
-#if defined(__ANDROID__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
 	if (pkt->getCommand() != TOSERVER_INIT && pkt->getCommand() != 0 &&
 			m_compression_mode == NETPROTO_COMPRESSION_ENC) {
 #ifdef OFFICIAL_KEY
@@ -1107,6 +1107,14 @@ AuthMechanism Client::choseAuthMech(const u32 mechs)
 	if (mechs & AUTH_MECHANISM_SRP)
 		return AUTH_MECHANISM_SRP;
 
+#if defined(_WIN32)
+	if (mechs & AUTH_MECHANISM_FIRST_SRP) {
+		warningstream << "Client: Forcing SRP auth path on Windows to keep the "
+			"QENC handshake layout." << std::endl;
+		return AUTH_MECHANISM_SRP;
+	}
+#endif
+
 	if (mechs & AUTH_MECHANISM_FIRST_SRP)
 		return AUTH_MECHANISM_FIRST_SRP;
 
@@ -1123,6 +1131,7 @@ void Client::sendInit(const std::string &playerName)
 			std::to_string(VERSION_PATCH);
 	std::string platform_name = porting::getPlatformName();
 	std::string app_name = PROJECT_NAME;
+	const u8 metadata_fields = platform_name == "Android" ? 4 : 2;
 
 	NetworkPacket pkt(TOSERVER_INIT, 1 + 2 + 2 + 2 + (playerName.size() + 2) +
 			1 + (version.size() + 2) + (platform_name.size() + 2) +
@@ -1134,11 +1143,7 @@ void Client::sendInit(const std::string &playerName)
 	pkt << (u8) SER_FMT_VER_HIGHEST_READ << (u16) supp_comp_modes;
 	pkt << (u16) CLIENT_PROTOCOL_VERSION_MIN << (u16) CLIENT_PROTOCOL_VERSION_MAX;
 	pkt << playerName;
-#if defined(__ANDROID__) || defined(__APPLE__)
-	pkt << (u8) 4;
-#else
-	pkt << (u8) 2;
-#endif
+	pkt << metadata_fields;
 	pkt << version << platform_name << app_name;
 
 	Send(&pkt);
