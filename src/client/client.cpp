@@ -673,7 +673,7 @@ bool Client::loadMedia(const std::string &data, const std::string &filename,
 {
 	std::string name;
 
-#if defined(__ANDROID__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
 	const char *enc_ext[] = {
 		".e",
 		NULL
@@ -1106,14 +1106,6 @@ AuthMechanism Client::choseAuthMech(const u32 mechs)
 {
 	if (mechs & AUTH_MECHANISM_SRP)
 		return AUTH_MECHANISM_SRP;
-
-#if defined(_WIN32)
-	if (mechs & AUTH_MECHANISM_FIRST_SRP) {
-		warningstream << "Client: Forcing SRP auth path on Windows to keep the "
-			"QENC handshake layout." << std::endl;
-		return AUTH_MECHANISM_SRP;
-	}
-#endif
 
 	if (mechs & AUTH_MECHANISM_FIRST_SRP)
 		return AUTH_MECHANISM_FIRST_SRP;

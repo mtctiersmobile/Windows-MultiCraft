@@ -25,7 +25,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cstring>
 #include <random>
 
-#if defined(__ANDROID__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
 #include <porting.h>
 #endif
 
@@ -148,7 +148,7 @@ void Encryption::setKey(std::string new_key)
 	setKey((uint8_t *)&resized_key[0]);
 }
 
-#if defined(__ANDROID__) || defined(__APPLE__)
+#if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
 bool Encryption::decryptSimple(const std::string &data, std::string &decrypted_data,
 		std::string *filename_to)
 {
