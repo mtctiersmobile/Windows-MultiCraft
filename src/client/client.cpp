@@ -39,6 +39,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "util/serialize.h"
 #include "util/string.h"
 #include "util/srp.h"
+#include "exceptions.h"
 #include "filesys.h"
 #include "mapblock_mesh.h"
 #include "mapblock.h"
@@ -62,6 +63,17 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "translation.h"
 
 extern gui::IGUIEnvironment* guienv;
+
+static const char *getToClientCommandName(u16 command)
+{
+	return command >= TOCLIENT_NUM_MSG_TYPES ? "?" :
+		toClientCommandTable[command].name;
+}
+
+static bool packetLooksEncrypted(NetworkPacket *pkt)
+{
+	return pkt->getSize() >= 4 && memcmp(pkt->getString(0), "ENC1", 4) == 0;
+}
 
 /*
 	Utility classes
@@ -918,6 +930,16 @@ void Client::ReceiveAll()
 			infostream << "Client::ReceiveAll(): "
 					"InvalidIncomingDataException: what()="
 					 << e.what() << std::endl;
+		} catch (const PacketError &e) {
+			errorstream << "Client::ReceiveAll(): PacketError while handling "
+				<< getToClientCommandName(pkt.getCommand()) << " ("
+				<< pkt.getCommand() << "), size=" << pkt.getSize()
+				<< ": " << e.what() << std::endl;
+		} catch (const SerializationError &e) {
+			errorstream << "Client::ReceiveAll(): SerializationError while handling "
+				<< getToClientCommandName(pkt.getCommand()) << " ("
+				<< pkt.getCommand() << "), size=" << pkt.getSize()
+				<< ": " << e.what() << std::endl;
 		}
 	}
 }
@@ -942,7 +964,13 @@ void Client::ProcessData(NetworkPacket *pkt)
 #else
 		static std::string secret_key = porting::getSecretKey("");
 #endif
-		pkt->decrypt(secret_key);
+		if (packetLooksEncrypted(pkt) && !pkt->decrypt(secret_key)) {
+			errorstream << "Client::ProcessData(): Failed to decrypt "
+				<< getToClientCommandName(pkt->getCommand()) << " ("
+				<< pkt->getCommand() << "), size=" << pkt->getSize()
+				<< std::endl;
+			return;
+		}
 	}
 #endif
 
