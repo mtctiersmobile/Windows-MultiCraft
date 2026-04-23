@@ -61,6 +61,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include "game.h"
 #include "chatmessage.h"
 #include "translation.h"
+#define OFFICIAL_KEY "servers"
 
 extern gui::IGUIEnvironment* guienv;
 

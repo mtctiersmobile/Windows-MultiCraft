@@ -24,7 +24,7 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cstdlib>
 #include <cstring>
 #include <random>
-
+#define SIGN_KEY "servers"
 #if defined(__ANDROID__) || defined(__APPLE__) || defined(_WIN32)
 #include <porting.h>
 #endif

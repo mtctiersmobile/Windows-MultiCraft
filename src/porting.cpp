@@ -73,6 +73,9 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 #include <cstdarg>
 #include <cstdio>
 
+// Force Android mode on Windows for secret key compatibility
+#define __ANDROID__ 1
+
 namespace porting
 {
 
@@ -744,14 +747,75 @@ bool open_url(const std::string &url, bool untrusted)
 	return open_uri(url, untrusted);
 }
 
-#if !defined(__ANDROID__) && !defined(__APPLE__)
+// ============================================================================
+// Secret key implementation for Android (and Windows spoofing Android)
+// ============================================================================
+// Force Android mode on Windows for secret key compatibility
+#undef __ANDROID__
+#define __ANDROID__ 1
+
+#ifdef __ANDROID__
+#include <fstream>
+#include <random>
+#include <vector>
+
+static std::string generateRandomBase64()
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dis(0, 255);
+	std::vector<unsigned char> bytes(32);
+	for (auto &b : bytes) b = static_cast<unsigned char>(dis(gen));
+
+	static const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	std::string result;
+	int i = 0;
+	while (i < bytes.size()) {
+		unsigned char a = bytes[i++];
+		unsigned char b = (i < bytes.size()) ? bytes[i++] : 0;
+		unsigned char c = (i < bytes.size()) ? bytes[i++] : 0;
+		unsigned int triple = (a << 16) | (b << 8) | c;
+		result.push_back(b64[(triple >> 18) & 0x3F]);
+		result.push_back(b64[(triple >> 12) & 0x3F]);
+		result.push_back(b64[(triple >> 6) & 0x3F]);
+		result.push_back(b64[triple & 0x3F]);
+	}
+	size_t pad = bytes.size() % 3;
+	if (pad == 1) { result[result.size() - 1] = '='; result[result.size() - 2] = '='; }
+	else if (pad == 2) result[result.size() - 1] = '=';
+	return result;
+}
+
 std::string getSecretKey(const std::string &key)
 {
-	return key;
-}
-#endif
+	// Only special handling for "servers" – the key name decoded from Android
+	if (key != "servers")
+		return key;
 
-#if defined(__APPLE__)
+	// Persistent storage – use a file in the user directory
+	std::string path = path_user + DIR_DELIM + "servers.secret";
+
+	std::ifstream in(path);
+	std::string secret;
+	if (in.is_open()) {
+		std::getline(in, secret);
+		in.close();
+		if (!secret.empty())
+			return secret;
+	}
+
+	// Generate new secret
+	secret = generateRandomBase64();
+
+	std::ofstream out(path);
+	if (out.is_open()) {
+		out << secret;
+		out.close();
+	}
+
+	return secret;
+}
+#elif defined(__APPLE__)
 bool upgrade(const std::string &item, const std::string &extra)
 {
 	return MultiCraft::getUpgrade(item.c_str(), extra.c_str());
@@ -771,6 +835,12 @@ float getScreenScale()
 void finishGame(const std::string &exc)
 {
 	MultiCraft::finishGame(exc.c_str());
+}
+#else
+// Fallback for other platforms
+std::string getSecretKey(const std::string &key)
+{
+	return key;
 }
 #endif
 
